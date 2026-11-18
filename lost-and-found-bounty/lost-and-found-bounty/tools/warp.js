@@ -1,4 +1,3 @@
-// Usage: node warp.js 259201  (moves the local chain time forward by N seconds)
 const seconds = Number(process.argv[2]);
 const rpc = (method, params) =>
   fetch("http://127.0.0.1:8545", {
