@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lost &amp; Found Bounty</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="frame">
+
+  <header>
+    <span id="who">Wallet not connected</span>
+    <button id="connect" class="btn">Connect wallet</button>
+  </header>
+
+  <section class="hero">
+    <p class="eyebrow">Decentralized lost &amp; found</p>
+    <h1>Reward the one who finds it.</h1>
+    <a class="btn" href="#postForm">Post a bounty</a>
+  </section>
+
+  <main class="page">
+
+    <section class="panel">
+      <h2>Contract</h2>
+      <input id="addr" type="text" placeholder="Contract address (0x...)" aria-label="Contract address">
+      <button id="load" class="btn">Load board</button>
+      <span id="pending"></span>
+      <button id="withdraw" class="btn hidden">Withdraw</button>
+    </section>
+
+    <section class="panel">
+      <h2>Post a bounty</h2>
+      <form id="postForm">
+        <label>What did you lose?
+          <input id="pTitle" type="text" maxlength="100" required>
+        </label>
+        <label>Reward (ETH)
+          <input id="pReward" type="number" step="0.001" min="0.001" required>
+        </label>
+        <label>Arbiter address
+          <input id="pArbiter" type="text" placeholder="0x..." required>
+        </label>
+        <label>Days until deadline
+          <input id="pDays" type="number" min="1" max="180" value="7" required>
+        </label>
+        <button type="submit" class="btn">Post bounty</button>
+      </form>
+    </section>
+
+  
+    <section class="panel">
+      <h2>Bounty board</h2>
+      <div id="board"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Lifecycle (click a card)</h2>
+      <div id="flow">
+        <span class="step">OPEN</span>
+        <span class="step">CLAIMED</span>
+        <span class="step">DISPUTED</span>
+        <span class="step">PAID</span>
+      </div>
+    </section>
+
+
+    <section class="panel">
+      <h2>Events</h2>
+      <ul id="log"></ul>
+    </section>
+
+  </main>
+
+  </div>
+
+  <div id="toast" role="status"></div>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
