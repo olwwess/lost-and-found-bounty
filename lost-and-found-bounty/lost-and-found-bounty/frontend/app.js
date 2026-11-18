@@ -1,4 +1,4 @@
-// ===== 1. Contract function list (ABI): only what this page needs =====
+
 const ABI = [
   "function bountyCount() view returns (uint256)",
   "function pendingWithdrawals(address) view returns (uint256)",
@@ -10,16 +10,15 @@ const ABI = [
   "function cancelBounty(uint256 id)",
   "function withdraw()"
 ];
-// same order as the Status enum in the contract
+
 const STATUS = ["OPEN", "CLAIMED", "DISPUTED", "PAID", "REFUNDED", "CANCELLED", "SPLIT"];
 
-let provider, signer, me, contract;           // filled in when the wallet connects
-const $ = id => document.getElementById(id);  // shorthand for getElementById
+let provider, signer, me, contract;          
+const $ = id => document.getElementById(id);  
 
-// ===== 2. Helper functions =====
-function say(text, bad = false) {             // message at the bottom of the screen
+function say(text, bad = false) {             
   const t = $("toast");
-  t.textContent = text;                       // textContent, not innerHTML!
+  t.textContent = text;                       
   t.className = bad ? "bad" : "";
   t.style.display = "block";
   setTimeout(() => (t.style.display = "none"), 5000);
@@ -27,12 +26,11 @@ function say(text, bad = false) {             // message at the bottom of the sc
 const short = a => a.slice(0, 6) + "…" + a.slice(-4);
 const same = (a, b) => a.toLowerCase() === b.toLowerCase();
 
-// ===== 3. Connect the wallet =====
 $("connect").addEventListener("click", async () => {
   if (!window.ethereum) return say("Please install MetaMask", true);
   try {
     provider = new ethers.BrowserProvider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);   // MetaMask popup
+    await provider.send("eth_requestAccounts", []);   
     signer = await provider.getSigner();
     me = await signer.getAddress();
     $("who").textContent = short(me);
@@ -41,7 +39,6 @@ $("connect").addEventListener("click", async () => {
   }
 });
 
-// ===== 4. Load the contract and read data =====
 $("load").addEventListener("click", async () => {
   if (!signer) return say("Connect your wallet first", true);
   const addr = $("addr").value.trim();
@@ -54,8 +51,8 @@ async function refresh() {
   try {
     const count = Number(await contract.bountyCount());
     const board = $("board");
-    board.replaceChildren();                           // remove old cards
-    for (let id = count; id >= 1; id--) {              // newest first
+    board.replaceChildren();                          
+    for (let id = count; id >= 1; id--) {              
       const b = await contract.getBounty(id);
       board.append(makeCard(id, b));
     }
@@ -68,14 +65,13 @@ async function refresh() {
   }
 }
 
-// ===== 5. Build a card from contract data =====
 function makeCard(id, b) {
   const status = STATUS[Number(b.status)];
   const card = document.createElement("article");
-  card.className = "card " + status.toLowerCase();    // class = status color
+  card.className = "card " + status.toLowerCase();    
 
   const title = document.createElement("h3");
-  title.textContent = b.title;                         // safe: not innerHTML
+  title.textContent = b.title;                         
   const badge = document.createElement("span");
   badge.className = "badge";
   badge.textContent = status;
@@ -86,13 +82,11 @@ function makeCard(id, b) {
   owner.textContent = "Owner: " + short(b.owner);
   card.append(title, badge, reward, owner);
 
-  // clicking a card highlights its status in the diagram
   card.addEventListener("click", () => {
     document.querySelectorAll(".step").forEach(s =>
       s.classList.toggle("active", s.textContent === status));
   });
 
-  // buttons depend on your role and the bounty status
   const isOwner = same(me, b.owner);
   const isArbiter = same(me, b.arbiter);
   const isHeir = same(me, b.refundTo);
@@ -112,23 +106,21 @@ function makeCard(id, b) {
       const stake = await contract.requiredStake(id);  // 10% stake
       const digest = ethers.keccak256(ethers.toUtf8Bytes(proof.value.trim()));
       const salt = ethers.hexlify(ethers.randomBytes(32));
-      // same field order as computeProofHash in the contract: digest, finder, id, salt
       const hash = ethers.solidityPackedKeccak256(
         ["bytes32", "address", "uint256", "bytes32"], [digest, me, id, salt]);
-      localStorage.setItem("proof:" + id, JSON.stringify({ digest, salt })); // keep the secret
+      localStorage.setItem("proof:" + id, JSON.stringify({ digest, salt })); 
       return contract.claimFound(id, hash, ethers.ZeroAddress, { value: stake });
     });
   }
   return card;
 }
 
-// one function for every button: send, wait, refresh the board
 function addButton(card, text, extraClass, action) {
   const btn = document.createElement("button");
   btn.className = "btn " + extraClass;
   btn.textContent = text;
   btn.addEventListener("click", async (e) => {
-    e.stopPropagation();                               // do not trigger the card click
+    e.stopPropagation();                               
     try {
       say("Sending transaction…");
       const tx = await action();
@@ -142,9 +134,9 @@ function addButton(card, text, extraClass, action) {
   card.append(btn);
 }
 
-// ===== 6. Post a bounty =====
+
 $("postForm").addEventListener("submit", async (e) => {
-  e.preventDefault();                                  // do not reload the page
+  e.preventDefault();                                 
   if (!contract) return say("Load a contract first", true);
   try {
     const title = $("pTitle").value.trim();
@@ -153,11 +145,11 @@ $("postForm").addEventListener("submit", async (e) => {
     say("Posting bounty…");
     const tx = await contract.postBounty(
       title,
-      ethers.keccak256(ethers.toUtf8Bytes(title)),     // description hash
+      ethers.keccak256(ethers.toUtf8Bytes(title)),     
       $("pArbiter").value.trim(),
-      ethers.ZeroAddress,                              // refundTo = the owner
+      ethers.ZeroAddress,                              
       deadline,
-      { value: ethers.parseEther($("pReward").value) } // the reward
+      { value: ethers.parseEther($("pReward").value) } 
     );
     await tx.wait();
     say("Bounty posted");
@@ -167,7 +159,6 @@ $("postForm").addEventListener("submit", async (e) => {
   }
 });
 
-// ===== 7. Withdraw money =====
 $("withdraw").addEventListener("click", async () => {
   try {
     const tx = await contract.withdraw();
